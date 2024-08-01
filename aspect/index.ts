@@ -6,9 +6,9 @@ import {
   PreContractCallInput,
   sys,
   uint8ArrayToHex,
-  UintData,
-} from "@artela/aspect-libs";
-import { Protobuf } from "as-proto/assembly";
+  UintData
+} from '@artela/aspect-libs';
+import { Protobuf } from 'as-proto/assembly';
 
 /**
 
@@ -20,8 +20,8 @@ class Aspect implements IPreContractCallJP {
    */
   preContractCall(input: PreContractCallInput): void {
     // read the throttle config from the properties and decode
-    const interval = sys.aspect.property.get<u64>("interval");
-    const limit = sys.aspect.property.get<u64>("limit");
+    const interval = sys.aspect.property.get<u64>('interval');
+    const limit = sys.aspect.property.get<u64>('limit');
 
     // get the contract address, from address and build the storage prefix
     const contractAddress = uint8ArrayToHex(input.call!.to);
@@ -30,7 +30,7 @@ class Aspect implements IPreContractCallJP {
 
     // load the current block timestamp
     const blockTimeBytes = sys.hostApi.runtimeContext.get(
-      "block.header.timestamp"
+      'block.header.timestamp'
     );
     const blockTime = Protobuf.decode<UintData>(
       blockTimeBytes,
@@ -39,22 +39,22 @@ class Aspect implements IPreContractCallJP {
 
     // load last execution timestamp
     const lastExecState = sys.aspect.mutableState.get<u64>(
-      storagePrefix + "lastExecAt"
+      storagePrefix + 'lastExecAt'
     );
     const lastExec = lastExecState.unwrap();
 
     // check if the throttle interval has passed, revert if not
     if (lastExec > 0 && blockTime - lastExec < interval) {
-      sys.revert("throttled");
+      sys.revert('throttled');
     }
 
     // check if the throttle limit has been reached, revert if so
     const execTimeState = sys.aspect.mutableState.get<u64>(
-      storagePrefix + "execTimes"
+      storagePrefix + 'execTimes'
     );
     const execTimes = execTimeState.unwrap();
     if (limit && execTimes >= limit) {
-      sys.revert("execution limit reached");
+      sys.revert('execution limit exceeded');
     }
 
     // update the throttle state
